@@ -1,4 +1,4 @@
-# QuackVideo
+# 🦆 QuackVideo
 
 **Work In Progress**
 
