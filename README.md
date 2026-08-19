@@ -1,223 +1,69 @@
-# 🦆 QuackVideo
+# QuackVideo
 
-## AI-Powered Video Processing for Educational Content
+Transcript-first content engine for podcasts, talking-head videos, tutorials, and short-form social packages.
 
-QuackVideo is a powerful video processing tool designed for educational content creators. It automates video editing, clip extraction, and post-production to help you create professional content for multiple platforms from a single recording.
+QuackVideo turns one recording into a reviewable set of platform-ready files. It does not upload or schedule posts.
 
-[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![QuackCore](https://img.shields.io/badge/QuackCore-Compatible-green.svg)](https://github.com/rodmtech/quackcore)
+## Requirements
 
-## 🎥 Features
-
-- **Automated Video Editing**: Post-process recordings with noise reduction, color correction, and audio normalization
-- **Smart Clip Extraction**: Identify and extract key moments for social media sharing
-- **Multi-platform Export**: Format content for YouTube, Instagram, TikTok, LinkedIn, and more
-- **Content Analysis**: Identify key topics, chapter markers, and highlights
-- **Transition Generation**: Create professional transitions between segments
-- **Thumbnail Extraction**: Pull the best frames for thumbnail creation
-- **B-Roll Management**: Extract and organize segments for b-roll footage
-- **Caption Generation**: Create accurate captions and subtitles
-- **Format Conversion**: Convert between video formats while maintaining quality
-
-## 🚀 Installation
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/)
+- FFmpeg and ffprobe on `PATH`
 
 ```bash
-# Install from PyPI
-pip install quackvideo
-
-# Or install from source
-git clone https://github.com/rodmtech/quackvideo.git
-cd quackvideo
-pip install -e .
+uv sync --extra dev
+make verify
 ```
 
-## 📋 Requirements
-
-- Python 3.13+
-- FFmpeg 5.0+
-- QuackCore library
-- Anthropic API key (optional, for enhanced analysis)
-
-## 🧩 Integrations
-
-QuackVideo is part of the QuackVerse ecosystem and integrates with:
-
-- **QuackCore**: Provides infrastructure and shared utilities
-- **QuackBuddy**: Orchestration and command-line interface
-- **QuackImage**: For thumbnail generation from extracted frames
-- **QuackDistro**: For text content generated from video transcripts
-- **AI Product Engineer**: Final publication destination
-
-## 💻 Quick Start
+## Workflow
 
 ```bash
-# Process a video with default settings
-quackvideo process my-recording.mp4 --output processed/
-
-# Extract short clips for social media
-quackvideo extract-clips my-recording.mp4 --duration 60 --count 3
-
-# Create a highlights compilation
-quackvideo create-highlights my-recording.mp4 --duration 5:00
-
-# Run through QuackBuddy
-quackbuddy video process my-recording.mp4
+quackvideo project init --name studio --workspace workspace
+quackvideo ingest recording.mp4 --profile talking-head --workspace workspace
+quackvideo run EPISODE_ID --until analyze --workspace workspace
+quackvideo review list EPISODE_ID --workspace workspace
+quackvideo review approve EPISODE_ID MOMENT_ID --workspace workspace
+quackvideo compose EPISODE_ID --workspace workspace
+quackvideo package EPISODE_ID --workspace workspace
 ```
 
-## 🔍 Example: Process a Tutorial Video
+Profiles: `podcast`, `talking-head`, `tutorial`, `social`.
 
-```python
-from quackvideo.processor import VideoProcessor
-from quackvideo.analysis import ContentAnalyzer
-from quackvideo.export import ClipExporter
+Every command accepts `--json` for agents.
 
-# Initialize processor
-processor = VideoProcessor()
-
-# Process the main video
-processed_video = processor.process(
-    "python_tutorial.mp4",
-    normalize_audio=True,
-    enhance_video=True,
-    reduce_noise=True
-)
-
-# Analyze content for key moments
-analyzer = ContentAnalyzer()
-key_moments = analyzer.find_key_moments(processed_video, count=5)
-
-# Export clips for different platforms
-exporter = ClipExporter()
-for i, moment in enumerate(key_moments):
-    # Create Twitter/X clip
-    exporter.create_clip(
-        processed_video,
-        start=moment.start_time,
-        duration=60,
-        output=f"clips/twitter_clip_{i}.mp4",
-        format="twitter"
-    )
-    
-    # Create TikTok clip
-    exporter.create_clip(
-        processed_video,
-        start=moment.start_time,
-        duration=60,
-        output=f"clips/tiktok_clip_{i}.mp4",
-        format="tiktok",
-        add_captions=True
-    )
-```
-
-## 📊 Workflow Architecture
+## Output layout
 
 ```
-Recording → Preprocessing → Content Analysis → Editing → Platform-Specific Export
-    ↓             ↓                 ↓             ↓               ↓
- Quality      Background        Topic/Segment   Transition    Format/Resolution
-Enhancement   Removal           Detection       Generation     Optimization
-    ↓             ↓                 ↓             ↓               ↓
- Audio        Color              Key Moment     Visual        Platform-Specific
-Normalization Correction         Detection      Effects        Metadata
+workspace/episodes/<id>/
+  source/                 immutable copy of the recording
+  artifacts/ingest/       probe + QC
+  artifacts/normalize/    loudnorm audio + mezzanine
+  artifacts/transcript/   json, srt, vtt, markdown
+  artifacts/analyze/      chapters + ranked moments
+  artifacts/review/       approval manifest
+  artifacts/compose/      approved clips + captions
+  artifacts/packages/     per-platform handoff directories
 ```
 
-## 📝 Example Configuration
+Compose and package run only after at least one moment is approved.
 
-```yaml
-# quackvideo.yaml
-projects:
-  python_tutorials:
-    output_path: "/media/tutorials/python"
-    preferred_resolution: "1080p"
-    platforms:
-      - youtube
-      - twitter
-      - linkedin
-    clip_duration: 60
-    highlight_count: 5
-    
-processing:
-  audio:
-    normalize: true
-    noise_reduction: 0.2
-    compression: true
-  video:
-    color_correction: true
-    stabilization: false
-    
-platforms:
-  youtube:
-    resolution: "1080p"
-    aspect_ratio: "16:9"
-    format: "mp4"
-  twitter:
-    resolution: "720p"
-    aspect_ratio: "16:9"
-    format: "mp4"
-    max_duration: 140
-  tiktok:
-    resolution: "1080p"
-    aspect_ratio: "9:16"
-    format: "mp4"
-    max_duration: 180
-```
+## Providers
 
-## 🔧 Command-Line Interface
-
-QuackVideo provides a comprehensive CLI:
-
-```
-Usage: quackvideo [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --config PATH  Path to configuration file
-  --verbose      Enable verbose output
-  --help         Show this message and exit
-
-Commands:
-  process          Process a full video
-  extract-frames   Extract frames from video
-  extract-clips    Extract short clips from video
-  create-highlights  Create a highlights compilation
-  analyze-content   Analyze video content
-  generate-captions Generate captions/subtitles
-  convert           Convert video to different format
-```
-
-## 📚 Documentation
-
-Full documentation is available at [https://rodmtech.github.io/quackvideo/](https://rodmtech.github.io/quackvideo/)
-
-## 🧪 Testing
+Default transcription is `fake` (deterministic, for tests and dry runs).
 
 ```bash
-# Run tests
-pytest
-
-# Run with coverage
-pytest --cov=quackvideo
+export QUACKVIDEO_TRANSCRIPTION_PROVIDER=openai
+export QUACKVIDEO_OPENAI_API_KEY=...
 ```
 
-## 🔄 Contributing
+Analysis defaults to a heuristic ranker that uses transcript windows, duration policy, scene cuts, and imported performance signals.
 
-Contributions are welcome! Please check out our [contribution guidelines](CONTRIBUTING.md) for details.
+```bash
+quackvideo metrics import EPISODE_ID stats.csv --workspace workspace
+```
 
-## 🔗 Related Projects
+CSV columns: `moment_id,platform,views,retention_3s,retention_30s,ctr,comments`.
 
-- [QuackCore](https://github.com/rodmtech/quackcore) - Core infrastructure
-- [QuackBuddy](https://github.com/rodmtech/quackbuddy) - Orchestration layer
-- [QuackImage](https://github.com/rodmtech/quackimage) - Image generation
-- [QuackDistro](https://github.com/rodmtech/quackdistro) - Content distribution
-- [QuackResearch](https://github.com/rodmtech/quackresearch) - Research and planning
-- [QuackTutorial](https://github.com/rodmtech/quacktutorial) - Tutorial generation
+## License
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgements
-
-- Built with [QuackCore](https://github.com/rodmtech/quackcore)
-- Powered by [FFmpeg](https://ffmpeg.org/) and [OpenCV](https://opencv.org/)
-- AI capabilities provided by [Anthropic Claude](https://www.anthropic.com/claude)
+MIT
